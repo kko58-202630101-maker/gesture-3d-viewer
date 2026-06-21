@@ -2,50 +2,10 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Gesture 3D Viewer</title>
-
-<style>
-body{
-    background:#111;
-    color:white;
-    text-align:center;
-    font-family:Arial;
-}
-
-video{
-    width:500px;
-    border:2px solid white;
-    margin-top:20px;
-}
-</style>
-
+<title>테스트</title>
 </head>
-
-<body>
-
-<h1>Gesture 3D Viewer</h1>
-
-<p>웹캠 테스트</p>
-
-<video id="video" autoplay playsinline></video>
-
-<script>
-
-const video =
-document.getElementById("video");
-
-navigator.mediaDevices
-.getUserMedia({
-video:true
-})
-.then(stream=>{
- video.srcObject = stream;
-})
-.catch(err=>{
- alert(err.message);
-});
-
-</script>
-
+<body style="background:black;color:white;text-align:center;">
+<h1>성공!</h1>
+<p>GitHub Pages 정상 작동</p>
 </body>
 </html>
