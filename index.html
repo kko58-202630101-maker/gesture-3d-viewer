@@ -120,6 +120,9 @@ navigator.mediaDevices.getUserMedia({
 
     video.srcObject = stream;
 
+    statusText.innerHTML =
+    "웹캠 성공";
+
     const camera = new Camera(video,{
 
         onFrame: async ()=>{
@@ -135,9 +138,9 @@ navigator.mediaDevices.getUserMedia({
     });
 
     camera.start();
+})
+.catch(error=>{
+    statusText.innerHTML =
+    "오류 : " + error.message;
+    console.error(error);
 });
-
-</script>
-
-</body>
-</html>
