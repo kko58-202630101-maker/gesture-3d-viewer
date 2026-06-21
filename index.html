@@ -7,15 +7,10 @@
 
 <style>
 body{
-    margin:0;
     background:#111;
     color:white;
-    font-family:Arial,sans-serif;
     text-align:center;
-}
-
-h1{
-    margin-top:20px;
+    font-family:Arial;
 }
 
 video{
@@ -26,53 +21,121 @@ video{
 }
 
 #status{
-    font-size:28px;
+    font-size:35px;
     color:cyan;
-    margin-top:15px;
+    margin-top:20px;
 }
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
 </head>
 
 <body>
 
 <h1>Gesture 3D Viewer</h1>
 
-<p>웹캠 및 손 인식 테스트</p>
-
 <video id="video" autoplay playsinline muted></video>
 
-<div id="status">카메라 연결 중...</div>
+<div id="status">손 인식 시작 중...</div>
 
 <script>
 
-const video = document.getElementById("video");
-const statusText = document.getElementById("status");
+const video =
+document.getElementById("video");
 
-async function startCamera(){
+const statusText =
+document.getElementById("status");
 
-    try{
+function detectGesture(lm){
 
-        const stream =
-        await navigator.mediaDevices.getUserMedia({
-            video:true
-        });
+    let fingers=[];
 
-        video.srcObject = stream;
+    fingers.push(
+        lm[4].x < lm[3].x ? 1 : 0
+    );
 
-        statusText.innerHTML =
-        "웹캠 연결 성공";
+    fingers.push(
+        lm[8].y < lm[6].y ? 1 : 0
+    );
 
-    }
-    catch(error){
+    fingers.push(
+        lm[12].y < lm[10].y ? 1 : 0
+    );
 
-        console.error(error);
+    fingers.push(
+        lm[16].y < lm[14].y ? 1 : 0
+    );
 
-        statusText.innerHTML =
-        "웹캠 오류: " + error.message;
-    }
+    fingers.push(
+        lm[20].y < lm[18].y ? 1 : 0
+    );
+
+    if(JSON.stringify(fingers)==="[0,0,0,0,0]")
+        return "✊ FIST";
+
+    if(JSON.stringify(fingers)==="[0,1,1,0,0]")
+        return "✌️ V SIGN";
+
+    if(JSON.stringify(fingers)==="[1,1,1,1,1]")
+        return "🖐 OPEN HAND";
+
+    return "👋 MOVE";
 }
 
-startCamera();
+const hands = new Hands({
+    locateFile: (file) =>
+    `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+});
+
+hands.setOptions({
+    maxNumHands:1,
+    minDetectionConfidence:0.7,
+    minTrackingConfidence:0.7
+});
+
+hands.onResults((results)=>{
+
+    if(results.multiHandLandmarks &&
+       results.multiHandLandmarks.length > 0){
+
+        const lm =
+        results.multiHandLandmarks[0];
+
+        statusText.innerHTML =
+        detectGesture(lm);
+
+    }else{
+
+        statusText.innerHTML =
+        "손을 화면에 보여주세요";
+    }
+});
+
+navigator.mediaDevices.getUserMedia({
+    video:true
+})
+.then(stream=>{
+
+    video.srcObject = stream;
+
+    const camera = new Camera(video,{
+
+        onFrame: async ()=>{
+
+            await hands.send({
+                image:video
+            });
+
+        },
+
+        width:640,
+        height:480
+    });
+
+    camera.start();
+});
 
 </script>
 
