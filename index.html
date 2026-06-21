@@ -1,11 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="utf-8">
-<title>테스트</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gesture 3D Viewer</title>
+
+<style>
+body{
+    margin:0;
+    background:#111;
+    color:white;
+    font-family:Arial,sans-serif;
+    text-align:center;
+}
+
+h1{
+    margin-top:20px;
+}
+
+video{
+    width:500px;
+    max-width:90%;
+    border:3px solid white;
+    border-radius:10px;
+}
+
+#status{
+    font-size:28px;
+    color:cyan;
+    margin-top:15px;
+}
+</style>
 </head>
-<body style="background:black;color:white;text-align:center;">
-<h1>성공!</h1>
-<p>GitHub Pages 정상 작동</p>
+
+<body>
+
+<h1>Gesture 3D Viewer</h1>
+
+<p>웹캠 및 손 인식 테스트</p>
+
+<video id="video" autoplay playsinline muted></video>
+
+<div id="status">카메라 연결 중...</div>
+
+<script>
+
+const video = document.getElementById("video");
+const statusText = document.getElementById("status");
+
+async function startCamera(){
+
+    try{
+
+        const stream =
+        await navigator.mediaDevices.getUserMedia({
+            video:true
+        });
+
+        video.srcObject = stream;
+
+        statusText.innerHTML =
+        "웹캠 연결 성공";
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        statusText.innerHTML =
+        "웹캠 오류: " + error.message;
+    }
+}
+
+startCamera();
+
+</script>
+
 </body>
 </html>
