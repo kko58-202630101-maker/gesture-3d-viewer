@@ -2,94 +2,569 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>STL FINAL WORKING</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STL Viewer</title>
 <style>
-body { margin:0; overflow:hidden; background:#111; }
-#ui { position:fixed; top:10px; left:10px; z-index:10; }
-canvas { display:block; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    overflow: hidden;
+    background: #0d0d0f;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #e0e0e0;
+  }
+
+  canvas { display: block; }
+
+  #topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 52px;
+    background: rgba(15,15,20,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #ffffff18;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    z-index: 100;
+  }
+
+  #topbar .logo {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: #fff;
+    white-space: nowrap;
+    margin-right: 8px;
+  }
+
+  .upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    padding: 7px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .18s, transform .1s;
+    white-space: nowrap;
+  }
+  .upload-btn:hover { background: #1d4ed8; }
+  .upload-btn:active { transform: scale(.97); }
+  input[type=file] { display: none; }
+
+  .sep {
+    width: 1px; height: 28px;
+    background: #ffffff20;
+    flex-shrink: 0;
+  }
+
+  .ctrl-label {
+    font-size: 11px;
+    color: #888;
+    white-space: nowrap;
+    margin-right: -6px;
+  }
+  select, input[type=color] {
+    background: #1e1e28;
+    color: #e0e0e0;
+    border: 1px solid #ffffff20;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+  }
+  select:focus { border-color: #2563eb; }
+
+  input[type=color] {
+    width: 36px; height: 32px;
+    padding: 2px;
+    cursor: pointer;
+  }
+
+  .toggle-btn {
+    background: #1e1e28;
+    color: #aaa;
+    border: 1px solid #ffffff20;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .18s, color .18s, border-color .18s;
+    white-space: nowrap;
+  }
+  .toggle-btn.active {
+    background: #2563eb22;
+    color: #60a5fa;
+    border-color: #2563eb88;
+  }
+
+  #fileInfo {
+    margin-left: auto;
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+  }
+
+  #sidebar {
+    position: fixed;
+    top: 64px; left: 12px;
+    width: 200px;
+    background: rgba(15,15,20,0.82);
+    backdrop-filter: blur(10px);
+    border: 1px solid #ffffff12;
+    border-radius: 12px;
+    padding: 14px;
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .sidebar-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: #555;
+    text-transform: uppercase;
+    margin-bottom: -4px;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .row label { color: #999; font-size: 12px; }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: #2563eb;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { background: #60a5fa; }
+
+  .val-badge {
+    background: #1e1e28;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 11px;
+    color: #aaa;
+    min-width: 36px;
+    text-align: center;
+  }
+
+  #resetBtn {
+    width: 100%;
+    padding: 7px;
+    background: #1e1e28;
+    border: 1px solid #ffffff15;
+    border-radius: 7px;
+    color: #aaa;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  #resetBtn:hover { background: #2a2a38; color: #fff; }
+
+  #dropOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(37,99,235,.18);
+    border: 3px dashed #2563eb;
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #93c5fd;
+    letter-spacing: .04em;
+  }
+  #dropOverlay.show { display: flex; }
+
+  #hint {
+    position: fixed;
+    bottom: 14px; right: 16px;
+    font-size: 11px;
+    color: #444;
+    line-height: 1.8;
+    text-align: right;
+    pointer-events: none;
+    z-index: 90;
+  }
+
+  #loading {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    font-size: 15px;
+    color: #aaa;
+  }
+  #loading.show { display: flex; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #333;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
-
 <body>
 
-<div id="ui">
-<input type="file" id="fileInput" accept=".stl">
+<div id="dropOverlay">📂 여기에 STL 파일을 놓으세요</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <span>로딩 중...</span>
+</div>
+
+<div id="topbar">
+  <div class="logo">STL Viewer</div>
+
+  <label class="upload-btn">
+    📂 파일 열기
+    <input type="file" id="fileInput" accept=".stl">
+  </label>
+
+  <div class="sep"></div>
+
+  <span class="ctrl-label">재질</span>
+  <select id="materialSelect">
+    <option value="phong">기본 (Phong)</option>
+    <option value="normal">Normal Map</option>
+    <option value="wireframe">와이어프레임</option>
+    <option value="flat">Flat Shading</option>
+    <option value="matcap">MatCap</option>
+  </select>
+
+  <span class="ctrl-label">색상</span>
+  <input type="color" id="colorPicker" value="#4488ff">
+
+  <div class="sep"></div>
+
+  <button class="toggle-btn" id="wireToggle">🔲 와이어 오버레이</button>
+  <button class="toggle-btn" id="gridToggle">📐 그리드</button>
+  <button class="toggle-btn" id="axisToggle">🎯 축</button>
+
+  <div id="fileInfo">파일을 열어주세요</div>
+</div>
+
+<div id="sidebar">
+  <div class="sidebar-title">카메라</div>
+
+  <div>
+    <div class="row">
+      <label>FOV</label>
+      <span class="val-badge" id="fovVal">45°</span>
+    </div>
+    <input type="range" id="fovSlider" min="20" max="120" value="45">
+  </div>
+
+  <div class="sep" style="width:100%;height:1px;background:#ffffff10;margin:0"></div>
+  <div class="sidebar-title">조명</div>
+
+  <div>
+    <div class="row">
+      <label>밝기</label>
+      <span class="val-badge" id="lightVal">1.2</span>
+    </div>
+    <input type="range" id="lightSlider" min="0" max="30" value="12" step="1">
+  </div>
+
+  <div>
+    <div class="row">
+      <label>환경광</label>
+      <span class="val-badge" id="ambVal">0.5</span>
+    </div>
+    <input type="range" id="ambSlider" min="0" max="20" value="5" step="1">
+  </div>
+
+  <div class="sep" style="width:100%;height:1px;background:#ffffff10;margin:0"></div>
+  <div class="sidebar-title">모델</div>
+
+  <div>
+    <div class="row">
+      <label>회전 속도</label>
+      <span class="val-badge" id="rotVal">0</span>
+    </div>
+    <input type="range" id="rotSlider" min="0" max="20" value="0" step="1">
+  </div>
+
+  <button id="resetBtn">⟳ 카메라 리셋</button>
+</div>
+
+<div id="hint">
+  좌클릭 드래그: 회전<br>
+  우클릭 드래그: 이동<br>
+  스크롤: 확대/축소<br>
+  파일 드래그 앤 드롭 지원
 </div>
 
 <script type="module">
-
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
 import { STLLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/STLLoader.js";
 
-let scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111111);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0d0f);
 
-let camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth/window.innerHeight,
-    0.1,
-    1000
-);
-camera.position.set(0,0,3);
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.001, 100000);
+camera.position.set(0, 0, 5);
 
-let renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.prepend(renderer.domElement);
 
-let controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.screenSpacePanning = true;
 
-scene.add(new THREE.AmbientLight(0x404040));
+const ambLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambLight);
 
-let light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(1,1,1);
-scene.add(light);
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(5, 10, 7);
+dirLight.castShadow = true;
+scene.add(dirLight);
+
+const backLight = new THREE.DirectionalLight(0x8899ff, 0.4);
+backLight.position.set(-5, -3, -5);
+scene.add(backLight);
+
+const hemi = new THREE.HemisphereLight(0x334466, 0x221100, 0.3);
+scene.add(hemi);
+
+const grid = new THREE.GridHelper(20, 40, 0x2a2a3a, 0x1e1e28);
+scene.add(grid);
+
+const axesHelper = new THREE.AxesHelper(2);
+axesHelper.visible = false;
+scene.add(axesHelper);
 
 let model = null;
+let wireMesh = null;
+let savedCamPos = null;
+let savedTarget = null;
+let currentColor = new THREE.Color(0x4488ff);
+let currentMaterialType = 'phong';
 
-// 렌더 루프
-function animate(){
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene,camera);
+function makeMaterial(type, color) {
+  const c = color || currentColor;
+  switch (type) {
+    case 'normal':
+      return new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
+    case 'wireframe':
+      return new THREE.MeshBasicMaterial({ color: c, wireframe: true });
+    case 'flat':
+      return new THREE.MeshPhongMaterial({ color: c, flatShading: true, side: THREE.DoubleSide });
+    case 'matcap':
+      return new THREE.MeshPhongMaterial({
+        color: c, shininess: 120,
+        specular: new THREE.Color(0.4, 0.4, 0.4),
+        side: THREE.DoubleSide
+      });
+    default:
+      return new THREE.MeshPhongMaterial({
+        color: c, shininess: 60,
+        specular: new THREE.Color(0.15, 0.15, 0.15),
+        side: THREE.DoubleSide
+      });
+  }
 }
-animate();
 
-// STL 업로드
-document.getElementById("fileInput").addEventListener("change",(e)=>{
+function fitCamera(mesh) {
+  const box = new THREE.Box3().setFromObject(mesh);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
 
-    const file = e.target.files[0];
-    const reader = new FileReader();
+  mesh.position.sub(center);
+  mesh.position.y -= size.y / 2;
 
-    reader.onload = function(event){
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const fov = camera.fov * (Math.PI / 180);
+  const dist = (maxDim / (2 * Math.tan(fov / 2))) * 2.2;
 
-        const loader = new STLLoader();
-        const geometry = loader.parse(event.target.result);
+  camera.near = dist / 1000;
+  camera.far  = dist * 1000;
+  camera.updateProjectionMatrix();
+  camera.position.set(dist * 0.6, dist * 0.5, dist);
 
-        if(model) scene.remove(model);
+  controls.target.set(0, size.y * 0.25, 0);
+  controls.update();
 
-        geometry.center();
+  savedCamPos = camera.position.clone();
+  savedTarget = controls.target.clone();
 
-        const material = new THREE.MeshNormalMaterial();
+  grid.scale.setScalar(maxDim / 5);
+  axesHelper.scale.setScalar(maxDim * 0.3);
+}
 
-        model = new THREE.Mesh(geometry, material);
+function loadSTL(arrayBuffer, fileName) {
+  document.getElementById('loading').classList.add('show');
+  setTimeout(() => {
+    try {
+      const geometry = new STLLoader().parse(arrayBuffer);
+      geometry.computeVertexNormals();
 
-        scene.add(model);
+      if (model) { scene.remove(model); model.geometry.dispose(); }
+      if (wireMesh) { scene.remove(wireMesh); wireMesh.geometry.dispose(); }
 
-    };
+      model = new THREE.Mesh(geometry, makeMaterial(currentMaterialType));
+      model.castShadow = true;
+      model.receiveShadow = true;
+      scene.add(model);
 
-    reader.readAsArrayBuffer(file);
+      wireMesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+        color: 0x88aaff, wireframe: true, opacity: 0.18, transparent: true
+      }));
+      wireMesh.visible = document.getElementById('wireToggle').classList.contains('active');
+      scene.add(wireMesh);
+
+      fitCamera(model);
+
+      const verts = geometry.attributes.position.count;
+      document.getElementById('fileInfo').textContent =
+        `${fileName}  ·  정점 ${verts.toLocaleString()}  ·  면 ${Math.floor(verts/3).toLocaleString()}`;
+    } catch (err) {
+      alert('STL 파싱 오류: ' + err.message);
+    }
+    document.getElementById('loading').classList.remove('show');
+  }, 50);
+}
+
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => loadSTL(ev.target.result, file.name);
+  reader.readAsArrayBuffer(file);
 });
 
-// resize
-window.addEventListener("resize",()=>{
-    camera.aspect = window.innerWidth/window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+const overlay = document.getElementById('dropOverlay');
+let dragCnt = 0;
+window.addEventListener('dragenter', (e) => { e.preventDefault(); dragCnt++; overlay.classList.add('show'); });
+window.addEventListener('dragleave', () => { if (--dragCnt <= 0) { dragCnt = 0; overlay.classList.remove('show'); } });
+window.addEventListener('dragover', (e) => e.preventDefault());
+window.addEventListener('drop', (e) => {
+  e.preventDefault(); dragCnt = 0; overlay.classList.remove('show');
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.name.toLowerCase().endsWith('.stl')) { alert('.stl 파일만 지원합니다.'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => loadSTL(ev.target.result, file.name);
+  reader.readAsArrayBuffer(file);
 });
 
+document.getElementById('materialSelect').addEventListener('change', (e) => {
+  currentMaterialType = e.target.value;
+  if (!model) return;
+  model.material.dispose();
+  model.material = makeMaterial(currentMaterialType);
+});
+
+document.getElementById('colorPicker').addEventListener('input', (e) => {
+  currentColor = new THREE.Color(e.target.value);
+  if (model?.material?.color) model.material.color.set(currentColor);
+});
+
+document.getElementById('wireToggle').addEventListener('click', (e) => {
+  e.currentTarget.classList.toggle('active');
+  if (wireMesh) wireMesh.visible = e.currentTarget.classList.contains('active');
+});
+
+const gridToggle = document.getElementById('gridToggle');
+gridToggle.classList.add('active');
+gridToggle.addEventListener('click', () => {
+  gridToggle.classList.toggle('active');
+  grid.visible = gridToggle.classList.contains('active');
+});
+
+document.getElementById('axisToggle').addEventListener('click', (e) => {
+  e.currentTarget.classList.toggle('active');
+  axesHelper.visible = e.currentTarget.classList.contains('active');
+});
+
+document.getElementById('fovSlider').addEventListener('input', (e) => {
+  camera.fov = Number(e.target.value);
+  camera.updateProjectionMatrix();
+  document.getElementById('fovVal').textContent = e.target.value + '°';
+});
+
+document.getElementById('lightSlider').addEventListener('input', (e) => {
+  const v = e.target.value / 10;
+  dirLight.intensity = v;
+  document.getElementById('lightVal').textContent = v.toFixed(1);
+});
+document.getElementById('ambSlider').addEventListener('input', (e) => {
+  const v = e.target.value / 10;
+  ambLight.intensity = v;
+  document.getElementById('ambVal').textContent = v.toFixed(1);
+});
+
+document.getElementById('rotSlider').addEventListener('input', (e) => {
+  const v = Number(e.target.value);
+  controls.autoRotate = v > 0;
+  controls.autoRotateSpeed = v * 0.2;
+  document.getElementById('rotVal').textContent = v > 0 ? (v / 10).toFixed(1) : '0';
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!savedCamPos) return;
+  camera.position.copy(savedCamPos);
+  controls.target.copy(savedTarget);
+  controls.update();
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+(function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  if (model && wireMesh) {
+    wireMesh.position.copy(model.position);
+    wireMesh.rotation.copy(model.rotation);
+    wireMesh.scale.copy(model.scale);
+  }
+  renderer.render(scene, camera);
+})();
 </script>
-
 </body>
 </html>
