@@ -21,14 +21,14 @@ video{
 }
 
 #status{
-    font-size:35px;
+    font-size:30px;
     color:cyan;
     margin-top:20px;
 }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
 
 </head>
 
@@ -38,109 +38,86 @@ video{
 
 <video id="video" autoplay playsinline muted></video>
 
-<div id="status">손 인식 시작 중...</div>
+<div id="status">초기화 중...</div>
 
 <script>
 
-const video =
-document.getElementById("video");
-
-const statusText =
-document.getElementById("status");
-
-function detectGesture(lm){
-
-    let fingers=[];
-
-    fingers.push(
-        lm[4].x < lm[3].x ? 1 : 0
-    );
-
-    fingers.push(
-        lm[8].y < lm[6].y ? 1 : 0
-    );
-
-    fingers.push(
-        lm[12].y < lm[10].y ? 1 : 0
-    );
-
-    fingers.push(
-        lm[16].y < lm[14].y ? 1 : 0
-    );
-
-    fingers.push(
-        lm[20].y < lm[18].y ? 1 : 0
-    );
-
-    if(JSON.stringify(fingers)==="[0,0,0,0,0]")
-        return "✊ FIST";
-
-    if(JSON.stringify(fingers)==="[0,1,1,0,0]")
-        return "✌️ V SIGN";
-
-    if(JSON.stringify(fingers)==="[1,1,1,1,1]")
-        return "🖐 OPEN HAND";
-
-    return "👋 MOVE";
-}
+const video = document.getElementById("video");
+const statusText = document.getElementById("status");
 
 const hands = new Hands({
-    locateFile: (file) =>
-    `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+  locateFile: (file) => {
+    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`;
+  }
 });
 
 hands.setOptions({
-    maxNumHands:1,
-    minDetectionConfidence:0.7,
-    minTrackingConfidence:0.7
+  maxNumHands: 1,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5
 });
 
-hands.onResults((results)=>{
+hands.onResults((results) => {
 
-    if(results.multiHandLandmarks &&
-       results.multiHandLandmarks.length > 0){
+  if(results.multiHandLandmarks &&
+     results.multiHandLandmarks.length > 0){
 
-        const lm =
-        results.multiHandLandmarks[0];
+      statusText.innerHTML =
+      "🖐 손 인식 성공";
 
-        statusText.innerHTML =
-        detectGesture(lm);
+  }else{
 
-    }else{
+      statusText.innerHTML =
+      "손을 화면에 보여주세요";
 
-        statusText.innerHTML =
-        "손을 화면에 보여주세요";
-    }
+  }
 });
 
 navigator.mediaDevices.getUserMedia({
-    video:true
+  video:true
 })
 .then(stream=>{
 
-    video.srcObject = stream;
+  video.srcObject = stream;
 
-    statusText.innerHTML =
-    "웹캠 성공";
+  const camera = new Camera(video, {
 
-    const camera = new Camera(video,{
+      onFrame: async () => {
 
-        onFrame: async ()=>{
+          try{
 
-            await hands.send({
-                image:video
-            });
+              await hands.send({
+                  image: video
+              });
 
-        },
+          }catch(e){
 
-        width:640,
-        height:480
-    });
+              console.error(e);
 
-    camera.start();
+              statusText.innerHTML =
+              "MediaPipe 오류";
+
+          }
+      },
+
+      width:640,
+      height:480
+
+  });
+
+  camera.start();
+
 })
-.catch(error=>{
-    statusText.innerHTML =
-    "오류 : " + error.message;
-    console.error(error);
+.catch(err=>{
+
+  console.error(err);
+
+  statusText.innerHTML =
+  "웹캠 오류 : " + err.message;
+
 });
+
+</script>
+
+</body>
+</html>
