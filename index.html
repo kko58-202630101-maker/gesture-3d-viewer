@@ -5,23 +5,15 @@
   <title>STL Hand Control</title>
 
   <link rel="stylesheet" href="style.css">
-
-  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/examples/js/loaders/STLLoader.js"></script>
-
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 </head>
 
 <body>
   <h2>🖐 STL 손 제스처 컨트롤</h2>
 
   <input type="file" id="fileInput" accept=".stl" />
-
   <video id="video" autoplay playsinline></video>
-
   <div id="container"></div>
 
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
