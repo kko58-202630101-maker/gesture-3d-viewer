@@ -14,6 +14,7 @@ function initThree() {
     0.1,
     1000
   );
+
   camera.position.z = 5;
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -21,8 +22,12 @@ function initThree() {
 
   document.getElementById("container").appendChild(renderer.domElement);
 
+  // 🔥 조명 (필수)
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+
   const light = new THREE.DirectionalLight(0xffffff, 1);
-  light.position.set(5, 5, 5);
+  light.position.set(5, 10, 5);
   scene.add(light);
 
   animate();
@@ -36,8 +41,21 @@ function loadSTL(event) {
     const loader = new THREE.STLLoader();
     const geometry = loader.parse(e.target.result);
 
-    const material = new THREE.MeshNormalMaterial();
+    // 🔥 중심 정렬 (안 하면 화면 밖에 있음)
+    geometry.center();
+
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x00ffcc,
+      metalness: 0.3,
+      roughness: 0.5,
+    });
+
+    if (model) scene.remove(model);
+
     model = new THREE.Mesh(geometry, material);
+
+    // 🔥 크기 자동 조절 (STL 크기 문제 해결)
+    model.scale.set(0.01, 0.01, 0.01);
 
     scene.add(model);
   };
@@ -50,7 +68,10 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-// ===== HAND TRACKING =====
+// ======================
+// 🖐 HAND TRACKING
+// ======================
+
 function initHandTracking() {
   const videoElement = document.getElementById("video");
 
@@ -62,13 +83,13 @@ function initHandTracking() {
   hands.setOptions({
     maxNumHands: 1,
     modelComplexity: 1,
-    minDetectionConfidence: 0.7,
-    minTrackingConfidence: 0.7,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5,
   });
 
   hands.onResults(onHandResults);
 
-  const cameraUtils = new Camera(videoElement, {
+  const camera = new Camera(videoElement, {
     onFrame: async () => {
       await hands.send({ image: videoElement });
     },
@@ -76,22 +97,23 @@ function initHandTracking() {
     height: 480,
   });
 
-  cameraUtils.start();
+  camera.start();
 }
 
 function onHandResults(results) {
   if (!model) return;
-  if (!results.multiHandLandmarks) return;
+
+  if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+    return;
+  }
 
   const hand = results.multiHandLandmarks[0];
-
-  // 손 기준점 (손목)
   const wrist = hand[0];
 
   const x = wrist.x;
   const y = wrist.y;
 
-  // 회전 변환
+  // 🎮 손 움직임 → 회전
   model.rotation.y = (x - 0.5) * 5;
   model.rotation.x = (y - 0.5) * 5;
 }
