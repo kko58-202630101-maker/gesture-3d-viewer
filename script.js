@@ -1,8 +1,12 @@
-console.log("SCRIPT LOADED");
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js";
+import { STLLoader } from "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/loaders/STLLoader.js";
+
+import { Hands } from "https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js";
+import { Camera } from "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js";
 
 let scene, camera, renderer, model;
 
-initThree();
+init();
 initHand();
 
 document.getElementById("fileInput").addEventListener("change", loadSTL);
@@ -10,7 +14,7 @@ document.getElementById("fileInput").addEventListener("change", loadSTL);
 // =====================
 // THREE INIT
 // =====================
-function initThree() {
+function init() {
   scene = new THREE.Scene();
 
   camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -37,16 +41,14 @@ function animate() {
 }
 
 // =====================
-// STL LOAD
+// STL LOAD (FIXED)
 // =====================
 function loadSTL(e) {
-  console.log("FILE LOADED");
-
   const file = e.target.files[0];
   const reader = new FileReader();
 
   reader.onload = function(event) {
-    const loader = new THREE.STLLoader();
+    const loader = new STLLoader();
     const geo = loader.parse(event.target.result);
 
     geo.center();
@@ -59,8 +61,6 @@ function loadSTL(e) {
     model.scale.set(0.02,0.02,0.02);
 
     scene.add(model);
-
-    console.log("MODEL ADDED");
   };
 
   reader.readAsArrayBuffer(file);
@@ -87,8 +87,7 @@ function initHand() {
     if (!model) return;
     if (!results.multiHandLandmarks) return;
 
-    const hand = results.multiHandLandmarks[0];
-    const w = hand[0];
+    const w = results.multiHandLandmarks[0][0];
 
     model.rotation.y = (w.x - 0.5) * 6;
     model.rotation.x = (w.y - 0.5) * 6;
