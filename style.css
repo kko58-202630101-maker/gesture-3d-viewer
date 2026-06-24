@@ -1,20 +1,21 @@
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #111;
-  color: white;
-  text-align: center;
+body{
+margin:0;
+overflow:hidden;
+background:black;
 }
 
-#container {
-  width: 100vw;
-  height: 80vh;
+#video{
+position:absolute;
+top:10px;
+left:10px;
+width:240px;
+border:2px solid white;
+z-index:10;
 }
 
-video {
-  position: absolute;
-  right: 10px;
-  top: 60px;
-  width: 200px;
-  border: 2px solid white;
+#fileInput{
+position:absolute;
+top:260px;
+left:10px;
+z-index:10;
 }
